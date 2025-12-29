@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 public interface PlayersDao {
     List<Players> getPlayers();
     Players getPlayerByPlayerId(int playerId);
+    List<Players> getPlayersByTeamId(int teamId);
     Players addPlayer(Players player);
     List<Players> deletePlayer(int playerId);
     Players updatePlayer(Players player);

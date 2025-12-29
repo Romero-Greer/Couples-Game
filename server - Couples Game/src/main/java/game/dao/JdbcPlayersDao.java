@@ -46,6 +46,18 @@ public class JdbcPlayersDao implements PlayersDao {
     }
 
     @Override
+    public List<Players> getPlayersByTeamId(int teamId) {
+        List<Players> players = null;
+        String sql = "SELECT * FROM players WHERE team_id = ?";
+
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, teamId);
+            while (results.next()) {
+                players.add(mapPlayersToRow(results));
+            }
+        return players;
+    }
+
+    @Override
     public Players addPlayer(Players player) {
         String sql = "INSERT INTO players (name, team_id) VALUES (?,?) RETURNING player_id";
         int newPlayerId = jdbcTemplate.queryForObject(sql, int.class, player.getName(), player.getTeamId());
