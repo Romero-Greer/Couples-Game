@@ -12,6 +12,10 @@ public class Players {
         this.teamId = teamId;
     }
 
+    public Players(String name){
+        this.name = name;
+    }
+
     public Players(int playerId, String name, int teamId) {
         this.playerId = playerId;
         this.name = name;

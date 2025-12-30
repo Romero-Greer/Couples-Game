@@ -83,14 +83,54 @@ public class GameCLI implements CommandLineRunner{
             } else if (choice == 2) {
                 teamCreation();
             } else if (choice == 3) {
-                printTeamUpdateSelections();
-                int teamChoice = promptForSelection("What would you like to update?");
+                printTeamsSelectionMenu();
+                int teamChoice = promptForSelection("Which team would you like to update?");
                 if (teamChoice == 1) {
-                    //teamsDao.updateTeam()
-                    /** I need to find a way to access the team and update the team name.
-                     * Basically, I need to create a update team method in this class that
-                     * doesn't take in any parameters. Have that method call the update team
-                     * method in the jdbc class.**/
+                    printTeamUpdateSelections();
+                    int updateChoice = promptForSelection("What would you like to update?");
+                    if (updateChoice == 1) {
+                        updateTeamName();
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames();
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                } else if (teamChoice == 2) {
+                    printTeamUpdateSelections();
+
+                    /** When I run this code the teams display correctly,
+                     * but when i update 1 teams name, it updates all of the team names. **/
+
+                    int updateChoice = promptForSelection("What would you like to update?");
+                    if (updateChoice == 1) {
+                        updateTeamName();
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames();
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                } else if (teamChoice == 3) {
+                    printTeamUpdateSelections();
+                    int updateChoice = promptForSelection("What would you like to update?");
+                    if (updateChoice == 1) {
+                        updateTeamName();
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames();
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                } else if (teamChoice == 4) {
+                    printTeamUpdateSelections();
+                    int updateChoice = promptForSelection("What would you like to update?");
+                    if (updateChoice == 1) {
+                        updateTeamName();
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames();
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                } else {
+                    System.out.println("Invalid choice. Try again.");
                 }
             } else if (choice == 5) {
                 done = true;
@@ -105,8 +145,8 @@ public class GameCLI implements CommandLineRunner{
         System.out.println("HOME");
         System.out.println("(1): Start Game");
         System.out.println("(2): Add Team");
-
-        System.out.println("(3): Quit Game");
+        System.out.println("(3): Update Team");
+        System.out.println("(5): Quit Game");
         //System.out.println("What would you like to do?");
     }
 
@@ -124,7 +164,39 @@ public class GameCLI implements CommandLineRunner{
     private void printTeamUpdateSelections() {
         //System.out.println("What would you like to update?");
         System.out.println("(1): Team Name");
-        System.out.println("(2): Player 1");
-        System.out.println("(3): Player 2");
+        System.out.println("(2): Players");
+        //System.out.println("(3): Player 2");
+    }
+
+    /** When I run this code the teams display correctly,
+     * but when i update 1 teams name, it updates all of the team names. **/
+    private void updateTeamName() {
+        System.out.println("Enter team name: ");
+        String teamName = input.nextLine();
+        Teams updatedTeamName = new Teams(teamName);
+        teamsDao.updateTeam(updatedTeamName);
+    }
+
+    private void printTeamsSelectionMenu(){
+        //System.out.println("Which team would you like to update?");
+        List<Teams> teamNames = teamsDao.getTeams();
+        int teamId = 0;
+        for (Teams team : teamNames) {
+            String teamName = team.getTeamName();
+            teamId = teamId + 1;
+            System.out.println("(" + teamId + "): " + teamName);
+        }
+    }
+
+    private void updatePlayersNames(){
+        System.out.println("Enter player 1 name: ");
+        String player1Name = input.nextLine();
+        Players updatedPlayer1 = new Players(player1Name);
+        playersDao.updatePlayer(updatedPlayer1);
+
+        System.out.println("Enter player 2 name: ");
+        String player2Name = input.nextLine();
+        Players updatedPlayer2 = new Players(player2Name);
+        playersDao.updatePlayer(updatedPlayer2);
     }
 }

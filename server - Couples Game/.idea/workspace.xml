@@ -18,7 +18,7 @@
       <change beforePath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/tmp/compileJava/previous-compilation-data.bin" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/game/CLI/GameCLI.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/CLI/GameCLI.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/game/dao/JdbcPlayersDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/dao/JdbcPlayersDao.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/game/dao/PlayersDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/dao/PlayersDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/game/model/Players.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/game/model/Players.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

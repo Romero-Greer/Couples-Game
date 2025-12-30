@@ -77,9 +77,9 @@ public class JdbcPlayersDao implements PlayersDao {
 
     @Override
     public Players updatePlayer(Players player) {
-        String sql = "UPDATE players SET name = ?, team_id = ? WHERE player_id = ?";
+        String sql = "UPDATE players SET name = ? WHERE player_id = ?";
 
-        jdbcTemplate.update(sql, player.getName(), player.getTeamId());
+        jdbcTemplate.update(sql, player.getName());
 
         return getPlayerByPlayerId(player.getPlayerId());
     }
