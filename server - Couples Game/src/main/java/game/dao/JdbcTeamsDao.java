@@ -24,7 +24,7 @@ public class JdbcTeamsDao implements TeamsDao {
     @Override
     public List<Teams> getTeams() {
         List<Teams> teams = new ArrayList<>();
-        String sql = "SELECT * FROM teams";
+        String sql = "SELECT * FROM teams ORDER BY team_id";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
 
         while (results.next()) {
@@ -68,8 +68,8 @@ public class JdbcTeamsDao implements TeamsDao {
 
     @Override
     public Teams updateTeam(Teams team) {
-        String sql = "UPDATE teams SET team_name = ?";
-        jdbcTemplate.update(sql, team.getTeamName());
+        String sql = "UPDATE teams SET team_name = ? WHERE team_id = ?";
+        jdbcTemplate.update(sql, team.getTeamName(), team.getTeamId());
         return getTeamByTeamId(team.getTeamId());
     }
 }

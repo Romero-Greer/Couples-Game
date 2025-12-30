@@ -47,7 +47,7 @@ public class JdbcPlayersDao implements PlayersDao {
 
     @Override
     public List<Players> getPlayersByTeamId(int teamId) {
-        List<Players> players = null;
+        List<Players> players = new ArrayList<>();
         String sql = "SELECT * FROM players WHERE team_id = ?";
 
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, teamId);
@@ -79,7 +79,7 @@ public class JdbcPlayersDao implements PlayersDao {
     public Players updatePlayer(Players player) {
         String sql = "UPDATE players SET name = ? WHERE player_id = ?";
 
-        jdbcTemplate.update(sql, player.getName());
+        jdbcTemplate.update(sql, player.getName(), player.getPlayerId());
 
         return getPlayerByPlayerId(player.getPlayerId());
     }

@@ -23,6 +23,10 @@ public class GameCLI implements CommandLineRunner{
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
     }
+
+    /** Couple things to work on next:
+     * Adding delete team option
+     * Adding in the return to home page within each of the choices**/
     @Override
     public void run(String... args) throws Exception {
 
@@ -34,15 +38,8 @@ public class GameCLI implements CommandLineRunner{
 
         startMenu();
     }
-    /** I need to change this menuSelection method to a print menu selection.
-     * Also need to take the scanner code out of that method and put into a separate method
-     * so that when i quit game it doesn't move onto the next method. Probably need
-     * to put it into a while loop or something. Check proj 1 in module 1 for help.
-     *
-     * Next I can add update and delete team options.**/
-    private void teamCreation() {
-        //Scanner input = new Scanner(System.in);
 
+    private void teamCreation() {
         System.out.println("Enter team name: ");
         String teamName = input.nextLine();
         Teams newTeam = new Teams(teamName);
@@ -63,49 +60,46 @@ public class GameCLI implements CommandLineRunner{
     }
 
     private void startMenu(){
-        //Scanner input = new Scanner(System.in);
         GameEngine  gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
-        /*System.out.println("HOME");
-        System.out.println("(1): Start Game");
-        System.out.println("(2): Add Team");
-
-        System.out.println("(): Quit Game");*/
-        //System.out.println("What would you like to do?");
-
-        //int choice = input.nextInt();
         boolean done = false;
         System.out.println("Welcome to the newest Couples Game! Time to find out which couple knows each other the best...");
         while(!done) {
             printMenuSelection();
             int choice = promptForSelection("What would you like to do?");
-            if (choice == 1) {
+            if (choice == 0) {
                 gameEngine.startGame();
-            } else if (choice == 2) {
+            } else if (choice == 1) {
                 teamCreation();
-            } else if (choice == 3) {
+            } else if (choice == 2) {
                 printTeamsSelectionMenu();
                 int teamChoice = promptForSelection("Which team would you like to update?");
-                if (teamChoice == 1) {
+                if (teamChoice == 0) {
                     printTeamUpdateSelections();
                     int updateChoice = promptForSelection("What would you like to update?");
                     if (updateChoice == 1) {
-                        updateTeamName();
+                        updateTeamName(teamChoice);
                     } else if (updateChoice == 2) {
-                        updatePlayersNames();
+                        updatePlayersNames(teamChoice);
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                } else if (teamChoice == 1) {
+                    printTeamUpdateSelections();
+                    int updateChoice = promptForSelection("What would you like to update?");
+                    if (updateChoice == 1) {
+                        updateTeamName(teamChoice);
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames(teamChoice);
                     } else {
                         System.out.println("Invalid choice. Try again.");
                     }
                 } else if (teamChoice == 2) {
                     printTeamUpdateSelections();
-
-                    /** When I run this code the teams display correctly,
-                     * but when i update 1 teams name, it updates all of the team names. **/
-
                     int updateChoice = promptForSelection("What would you like to update?");
                     if (updateChoice == 1) {
-                        updateTeamName();
+                        updateTeamName(teamChoice);
                     } else if (updateChoice == 2) {
-                        updatePlayersNames();
+                        updatePlayersNames(teamChoice);
                     } else {
                         System.out.println("Invalid choice. Try again.");
                     }
@@ -113,25 +107,17 @@ public class GameCLI implements CommandLineRunner{
                     printTeamUpdateSelections();
                     int updateChoice = promptForSelection("What would you like to update?");
                     if (updateChoice == 1) {
-                        updateTeamName();
+                        updateTeamName(teamChoice);
                     } else if (updateChoice == 2) {
-                        updatePlayersNames();
-                    } else {
-                        System.out.println("Invalid choice. Try again.");
-                    }
-                } else if (teamChoice == 4) {
-                    printTeamUpdateSelections();
-                    int updateChoice = promptForSelection("What would you like to update?");
-                    if (updateChoice == 1) {
-                        updateTeamName();
-                    } else if (updateChoice == 2) {
-                        updatePlayersNames();
+                        updatePlayersNames(teamChoice);
                     } else {
                         System.out.println("Invalid choice. Try again.");
                     }
                 } else {
                     System.out.println("Invalid choice. Try again.");
                 }
+            } else if (choice == 4) {
+                getTeams();
             } else if (choice == 5) {
                 done = true;
                 System.out.println("Thanks for playing. See you soon!");
@@ -143,11 +129,11 @@ public class GameCLI implements CommandLineRunner{
 
     private void printMenuSelection(){
         System.out.println("HOME");
-        System.out.println("(1): Start Game");
-        System.out.println("(2): Add Team");
-        System.out.println("(3): Update Team");
+        System.out.println("(0): Start Game");
+        System.out.println("(1): Add Team");
+        System.out.println("(2): Update Team");
+        System.out.println("(4): View Teams");
         System.out.println("(5): Quit Game");
-        //System.out.println("What would you like to do?");
     }
 
     private int promptForSelection(String prompt) {
@@ -162,25 +148,24 @@ public class GameCLI implements CommandLineRunner{
     }
 
     private void printTeamUpdateSelections() {
-        //System.out.println("What would you like to update?");
         System.out.println("(1): Team Name");
         System.out.println("(2): Players");
         //System.out.println("(3): Player 2");
     }
 
-    /** When I run this code the teams display correctly,
-     * but when i update 1 teams name, it updates all of the team names. **/
-    private void updateTeamName() {
+    private void updateTeamName(int element) {
         System.out.println("Enter team name: ");
         String teamName = input.nextLine();
-        Teams updatedTeamName = new Teams(teamName);
+        List<Teams> teams = teamsDao.getTeams();
+        Teams team = teams.get(element);
+        int teamId = team.getTeamId();
+        Teams updatedTeamName = new Teams(teamId, teamName);
         teamsDao.updateTeam(updatedTeamName);
     }
 
     private void printTeamsSelectionMenu(){
-        //System.out.println("Which team would you like to update?");
         List<Teams> teamNames = teamsDao.getTeams();
-        int teamId = 0;
+        int teamId = -1;
         for (Teams team : teamNames) {
             String teamName = team.getTeamName();
             teamId = teamId + 1;
@@ -188,15 +173,35 @@ public class GameCLI implements CommandLineRunner{
         }
     }
 
-    private void updatePlayersNames(){
+    private void updatePlayersNames(int element){
+        List<Teams> teams = teamsDao.getTeams();
+        Teams team = teams.get(element);
+        int teamId = team.getTeamId();
+
         System.out.println("Enter player 1 name: ");
         String player1Name = input.nextLine();
-        Players updatedPlayer1 = new Players(player1Name);
+        Players updatedPlayer1 = new Players(player1Name, teamId);
         playersDao.updatePlayer(updatedPlayer1);
 
         System.out.println("Enter player 2 name: ");
         String player2Name = input.nextLine();
-        Players updatedPlayer2 = new Players(player2Name);
+        Players updatedPlayer2 = new Players(player2Name, teamId);
         playersDao.updatePlayer(updatedPlayer2);
+    }
+
+    private void getTeams() {
+        List<Teams> teams = teamsDao.getTeams();
+        int teamNumber = 1;
+
+        for (Teams team : teams) {
+            System.out.println("Team " + teamNumber + ": " + team.getTeamName());
+            teamNumber++;
+            List<Players> players = playersDao.getPlayersByTeamId(team.getTeamId());
+            int playerNumber = 1;
+            for (Players player : players) {
+                System.out.println("Player " + playerNumber + ": " + player.getName());
+                playerNumber++;
+            }
+        }
     }
 }
