@@ -25,8 +25,8 @@ public class GameCLI implements CommandLineRunner{
     }
 
     /** Couple things to work on next:
-     * Adding delete team option
-     * Adding in the return to home page within each of the choices**/
+     * Figure out how to add a cap to the number of teams.
+     * And how to wipe out all the players and teams when the game ends.**/
     @Override
     public void run(String... args) throws Exception {
 
@@ -73,10 +73,135 @@ public class GameCLI implements CommandLineRunner{
             } else if (choice == 2) {
                 printTeamsSelectionMenu();
                 int teamChoice = promptForSelection("Which team would you like to update?");
-                if (teamChoice == 0) {
+                if (teamChoice < 0 || teamChoice > 4) {
+                    System.out.println("Invalid choice. Try again.");
+                } else if (teamChoice == 4) {
+                    //printMenuSelection();
+                    continue;
+                } else {
                     printTeamUpdateSelections();
                     int updateChoice = promptForSelection("What would you like to update?");
                     if (updateChoice == 1) {
+                        updateTeamName(teamChoice);
+                    } else if (updateChoice == 2) {
+                        updatePlayersNames(teamChoice);
+                    } else if (updateChoice == 3) {
+                        //printMenuSelection();
+                        continue;
+                    } else {
+                        System.out.println("Invalid choice. Try again.");
+                    }
+                }
+            } else if (choice == 3) {
+                printTeamsSelectionMenu();
+                int deleteChoice = promptForSelection("Which team would you like to remove?");
+                if (deleteChoice < 0 || deleteChoice > 3) {
+                    System.out.println("Invalid choice. Try again.");
+                } else {
+                    deleteTeam(deleteChoice);
+                }
+            } else if (choice == 4) {
+                getTeams();
+            } else if (choice == 5) {
+                done = true;
+                System.out.println("Thanks for playing. See you soon!");
+            } else {
+                System.out.println("Invalid choice");
+            }
+        }
+    }
+
+    private void printMenuSelection(){
+        System.out.println("Main Menu");
+        System.out.println("(0): Start Game");
+        System.out.println("(1): Add Team");
+        System.out.println("(2): Update Team");
+        System.out.println("(3): Remove Team");
+        System.out.println("(4): View Teams");
+        System.out.println("(5): Quit Game");
+    }
+
+    private int promptForSelection(String prompt) {
+        System.out.println(prompt);
+        int menuSelection = 0;
+        try {
+            menuSelection = Integer.parseInt(input.nextLine());
+        } catch (NumberFormatException e) {
+            menuSelection = -1;
+        }
+        return menuSelection;
+    }
+
+    private void printTeamUpdateSelections() {
+        System.out.println("(1): Team Name");
+        System.out.println("(2): Players");
+        System.out.println("(3): Back to main menu");
+    }
+
+    private void updateTeamName(int element) {
+        System.out.println("Enter team name: ");
+        String teamName = input.nextLine();
+        List<Teams> teams = teamsDao.getTeams();
+        Teams team = teams.get(element);
+        int teamId = team.getTeamId();
+        Teams updatedTeamName = new Teams(teamId, teamName);
+        teamsDao.updateTeam(updatedTeamName);
+    }
+
+    private void printTeamsSelectionMenu(){
+        List<Teams> teamNames = teamsDao.getTeams();
+        int teamId = -1;
+        for (Teams team : teamNames) {
+            String teamName = team.getTeamName();
+            teamId = teamId + 1;
+            System.out.println("(" + teamId + "): " + teamName);
+        }
+        System.out.println("(4): Return to Main Menu");
+    }
+
+    private void updatePlayersNames(int element){
+        List<Teams> teams = teamsDao.getTeams();
+        Teams team = teams.get(element);
+        int teamId = team.getTeamId();
+
+        System.out.println("Enter player 1 name: ");
+        String player1Name = input.nextLine();
+        Players updatedPlayer1 = new Players(player1Name, teamId);
+        playersDao.updatePlayer(updatedPlayer1);
+
+        System.out.println("Enter player 2 name: ");
+        String player2Name = input.nextLine();
+        Players updatedPlayer2 = new Players(player2Name, teamId);
+        playersDao.updatePlayer(updatedPlayer2);
+    }
+
+    private void deleteTeam(int element) {
+        List<Teams> teams = teamsDao.getTeams();
+        Teams team = teams.get(element);
+        int teamId = team.getTeamId();
+        teamsDao.removeTeam(teamId);
+    }
+
+    private void getTeams() {
+        List<Teams> teams = teamsDao.getTeams();
+        int teamNumber = 1;
+
+        for (Teams team : teams) {
+            System.out.println("Team " + teamNumber + ": " + team.getTeamName());
+            teamNumber++;
+            List<Players> players = playersDao.getPlayersByTeamId(team.getTeamId());
+            int playerNumber = 1;
+            for (Players player : players) {
+                System.out.println("Player " + playerNumber + ": " + player.getName());
+                playerNumber++;
+            }
+        }
+    }
+}
+/**  Code that I didn't want to fully delete just in case:**/
+
+/*
+* /*if (updateChoice == 1) {
                         updateTeamName(teamChoice);
                     } else if (updateChoice == 2) {
                         updatePlayersNames(teamChoice);
@@ -116,92 +241,4 @@ public class GameCLI implements CommandLineRunner{
                 } else {
                     System.out.println("Invalid choice. Try again.");
                 }
-            } else if (choice == 4) {
-                getTeams();
-            } else if (choice == 5) {
-                done = true;
-                System.out.println("Thanks for playing. See you soon!");
-            } else {
-                System.out.println("Invalid choice");
-            }
-        }
-    }
-
-    private void printMenuSelection(){
-        System.out.println("HOME");
-        System.out.println("(0): Start Game");
-        System.out.println("(1): Add Team");
-        System.out.println("(2): Update Team");
-        System.out.println("(4): View Teams");
-        System.out.println("(5): Quit Game");
-    }
-
-    private int promptForSelection(String prompt) {
-        System.out.println(prompt);
-        int menuSelection = 0;
-        try {
-            menuSelection = Integer.parseInt(input.nextLine());
-        } catch (NumberFormatException e) {
-            menuSelection = -1;
-        }
-        return menuSelection;
-    }
-
-    private void printTeamUpdateSelections() {
-        System.out.println("(1): Team Name");
-        System.out.println("(2): Players");
-        //System.out.println("(3): Player 2");
-    }
-
-    private void updateTeamName(int element) {
-        System.out.println("Enter team name: ");
-        String teamName = input.nextLine();
-        List<Teams> teams = teamsDao.getTeams();
-        Teams team = teams.get(element);
-        int teamId = team.getTeamId();
-        Teams updatedTeamName = new Teams(teamId, teamName);
-        teamsDao.updateTeam(updatedTeamName);
-    }
-
-    private void printTeamsSelectionMenu(){
-        List<Teams> teamNames = teamsDao.getTeams();
-        int teamId = -1;
-        for (Teams team : teamNames) {
-            String teamName = team.getTeamName();
-            teamId = teamId + 1;
-            System.out.println("(" + teamId + "): " + teamName);
-        }
-    }
-
-    private void updatePlayersNames(int element){
-        List<Teams> teams = teamsDao.getTeams();
-        Teams team = teams.get(element);
-        int teamId = team.getTeamId();
-
-        System.out.println("Enter player 1 name: ");
-        String player1Name = input.nextLine();
-        Players updatedPlayer1 = new Players(player1Name, teamId);
-        playersDao.updatePlayer(updatedPlayer1);
-
-        System.out.println("Enter player 2 name: ");
-        String player2Name = input.nextLine();
-        Players updatedPlayer2 = new Players(player2Name, teamId);
-        playersDao.updatePlayer(updatedPlayer2);
-    }
-
-    private void getTeams() {
-        List<Teams> teams = teamsDao.getTeams();
-        int teamNumber = 1;
-
-        for (Teams team : teams) {
-            System.out.println("Team " + teamNumber + ": " + team.getTeamName());
-            teamNumber++;
-            List<Players> players = playersDao.getPlayersByTeamId(team.getTeamId());
-            int playerNumber = 1;
-            for (Players player : players) {
-                System.out.println("Player " + playerNumber + ": " + player.getName());
-                playerNumber++;
-            }
-        }
-    }
-}
+* */
