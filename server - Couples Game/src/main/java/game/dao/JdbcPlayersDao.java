@@ -24,7 +24,7 @@ public class JdbcPlayersDao implements PlayersDao {
     @Override
     public List<Players> getPlayers() {
         List<Players> players = new ArrayList<>();
-        String sql = "SELECT * FROM players";
+        String sql = "SELECT * FROM players ORDER BY player_id ASC";
 
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
         while (results.next()) {
@@ -85,13 +85,14 @@ public class JdbcPlayersDao implements PlayersDao {
     }
 
     @Override
-    public Players getPlayerFromTeam(Players player) {
-        String sql = "SELECT * FROM players WHERE team_id = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, player.getTeamId());
+    public Integer getPlayerIdByNameAndTeamId(Players player) {
+        int playerId = -1;
+        String sql = "SELECT * FROM players WHERE name = ? AND team_id = ?";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, player.getName(), player.getTeamId());
 
         if (results.next()) {
-            player = mapPlayersToRow(results);
+            playerId = results.getInt("player_id");
         }
-        return player;
+        return playerId;
     }
 }

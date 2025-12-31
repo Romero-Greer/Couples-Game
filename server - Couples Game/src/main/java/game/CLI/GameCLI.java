@@ -25,7 +25,9 @@ public class GameCLI implements CommandLineRunner{
     }
 
     /** Couple things to work on next:
-     * Figure out how to wipe out all the players and teams when the game ends.**/
+     * Figure out how to wipe out all the players and teams when the game ends.
+     * Change to "teamChoice > 0 && teamChoice < teamsDao.getTeams().size"
+     * Also change the deleteChoice ^ **/
     @Override
     public void run(String... args) throws Exception {
 
@@ -165,18 +167,25 @@ public class GameCLI implements CommandLineRunner{
         List<Teams> teams = teamsDao.getTeams();
         Teams team = teams.get(element);
         int teamId = team.getTeamId();
+        List<Players> players = playersDao.getPlayersByTeamId(teamId);
+        Players player1 = players.get(0);
+        Players player2 = players.get(1);
+        /*String currentPlayer1Name = player1.getName();
+        String currentPlayer2Name = player2.getName();*/
+        int player1Id = playersDao.getPlayerIdByNameAndTeamId(player1);
+        int player2Id = playersDao.getPlayerIdByNameAndTeamId(player2);
 
         System.out.println("Enter player 1 name: ");
-        String player1Name = input.nextLine();
-        Players updatedPlayer1 = new Players(player1Name, teamId);
+        String newPlayer1Name = input.nextLine();
+        Players updatedPlayer1 = new Players(player1Id ,newPlayer1Name, teamId);
         playersDao.updatePlayer(updatedPlayer1);
 
         System.out.println("Enter player 2 name: ");
-        String player2Name = input.nextLine();
-        Players updatedPlayer2 = new Players(player2Name, teamId);
+        String newPlayer2Name = input.nextLine();
+        Players updatedPlayer2 = new Players(player2Id ,newPlayer2Name, teamId);
         playersDao.updatePlayer(updatedPlayer2);
 
-        System.out.println(player1Name + " & " + player2Name + " are ready to go!");
+        System.out.println(newPlayer1Name + " & " + newPlayer2Name + " are ready to go!");
     }
 
     private void deleteTeam(int element) {
