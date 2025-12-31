@@ -25,8 +25,7 @@ public class GameCLI implements CommandLineRunner{
     }
 
     /** Couple things to work on next:
-     * Figure out how to add a cap to the number of teams.
-     * And how to wipe out all the players and teams when the game ends.**/
+     * Figure out how to wipe out all the players and teams when the game ends.**/
     @Override
     public void run(String... args) throws Exception {
 
@@ -40,23 +39,27 @@ public class GameCLI implements CommandLineRunner{
     }
 
     private void teamCreation() {
-        System.out.println("Enter team name: ");
-        String teamName = input.nextLine();
-        Teams newTeam = new Teams(teamName);
-        Teams team1 = teamsDao.addTeam(newTeam);
+        int maxTeams = 4;
+        if (teamsDao.getTeams().size() >= maxTeams) {
+            System.out.println("Sorry, maximum number of teams reached. This game can only be played with " + maxTeams + " teams at the moment. Stay up to date, as this may change in the future.");
+        } else {
+            System.out.println("Enter team name: ");
+            String teamName = input.nextLine();
+            Teams newTeam = new Teams(teamName);
+            Teams team1 = teamsDao.addTeam(newTeam);
 
-        System.out.println("Enter player 1 name: ");
-        String player1Name = input.nextLine();
-        Players newPlayer1 = new Players(player1Name, team1.getTeamId());
-        playersDao.addPlayer(newPlayer1);
+            System.out.println("Enter player 1 name: ");
+            String player1Name = input.nextLine();
+            Players newPlayer1 = new Players(player1Name, team1.getTeamId());
+            playersDao.addPlayer(newPlayer1);
 
-        System.out.println("Enter player 2 name: ");
-        String player2Name = input.nextLine();
-        Players newPlayer2 = new Players(player2Name, team1.getTeamId());
-        playersDao.addPlayer(newPlayer2);
+            System.out.println("Enter player 2 name: ");
+            String player2Name = input.nextLine();
+            Players newPlayer2 = new Players(player2Name, team1.getTeamId());
+            playersDao.addPlayer(newPlayer2);
 
-        System.out.println("Welcome Team " + teamName + "!");
-        startMenu();
+            System.out.println("Welcome Team " + teamName + "!");
+        }
     }
 
     private void startMenu(){
@@ -76,7 +79,6 @@ public class GameCLI implements CommandLineRunner{
                 if (teamChoice < 0 || teamChoice > 4) {
                     System.out.println("Invalid choice. Try again.");
                 } else if (teamChoice == 4) {
-                    //printMenuSelection();
                     continue;
                 } else {
                     printTeamUpdateSelections();
@@ -86,7 +88,6 @@ public class GameCLI implements CommandLineRunner{
                     } else if (updateChoice == 2) {
                         updatePlayersNames(teamChoice);
                     } else if (updateChoice == 3) {
-                        //printMenuSelection();
                         continue;
                     } else {
                         System.out.println("Invalid choice. Try again.");
@@ -146,6 +147,7 @@ public class GameCLI implements CommandLineRunner{
         int teamId = team.getTeamId();
         Teams updatedTeamName = new Teams(teamId, teamName);
         teamsDao.updateTeam(updatedTeamName);
+        System.out.println("Team '" + teamName + "' has been updated!");
     }
 
     private void printTeamsSelectionMenu(){
@@ -173,6 +175,8 @@ public class GameCLI implements CommandLineRunner{
         String player2Name = input.nextLine();
         Players updatedPlayer2 = new Players(player2Name, teamId);
         playersDao.updatePlayer(updatedPlayer2);
+
+        System.out.println(player1Name + " & " + player2Name + " are ready to go!");
     }
 
     private void deleteTeam(int element) {
@@ -180,6 +184,7 @@ public class GameCLI implements CommandLineRunner{
         Teams team = teams.get(element);
         int teamId = team.getTeamId();
         teamsDao.removeTeam(teamId);
+        System.out.println(team.getTeamName() + " has been removed!");
     }
 
     private void getTeams() {
