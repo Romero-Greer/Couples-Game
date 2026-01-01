@@ -17,11 +17,14 @@ public class GameCLI implements CommandLineRunner{
     private PlayersDao playersDao;
     private TeamsDao teamsDao;
     private QuestionCardDao questionCardDao;
+    private GameEngine gameEngine;
+    //GameEngine  gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
 
     public GameCLI(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao) {
         this.playersDao = playersDao;
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
+        this.gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
     }
 
     /** Couple things to work on next:
@@ -65,7 +68,7 @@ public class GameCLI implements CommandLineRunner{
     }
 
     private void startMenu(){
-        GameEngine  gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
+        //GameEngine  gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
         boolean done = false;
         System.out.println("Welcome to the newest Couples Game! Time to find out which couple knows each other the best...");
         while(!done) {
@@ -73,6 +76,8 @@ public class GameCLI implements CommandLineRunner{
             int choice = promptForSelection("What would you like to do?");
             if (choice == 0) {
                 gameEngine.startGame();
+                handleRollOff();
+                gameEngine.playRound();
             } else if (choice == 1) {
                 teamCreation();
             } else if (choice == 2) {
@@ -139,6 +144,20 @@ public class GameCLI implements CommandLineRunner{
         System.out.println("(1): Team Name");
         System.out.println("(2): Players");
         System.out.println("(3): Back to main menu");
+    }
+
+    public void handleRollOff() {
+        List<Teams> teams = teamsDao.getTeams();
+        Teams nextTeamToRoll = teams.get(0);
+
+        while (nextTeamToRoll != null) {
+            System.out.println(nextTeamToRoll.getTeamName() + ", press enter to roll!");
+            input.nextLine();
+
+            int roll = (int)(Math.random() * 6) + 1;
+            System.out.println("Your team rolled a " + roll + "!");
+            nextTeamToRoll = gameEngine.initialRoll(nextTeamToRoll, roll);
+        }
     }
 
     private void updateTeamName(int element) {

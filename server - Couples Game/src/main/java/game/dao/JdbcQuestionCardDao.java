@@ -5,6 +5,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 public class JdbcQuestionCardDao implements QuestionCardDao {
     private JdbcTemplate jdbcTemplate;
@@ -13,16 +16,21 @@ public class JdbcQuestionCardDao implements QuestionCardDao {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    public QuestionCard mapQuestionCardToRow(SqlRowSet rs) {
+        QuestionCard questionCard = new QuestionCard();
+        questionCard.setCardId(rs.getInt("card_id"));
+        questionCard.setQuestion(rs.getString("question"));
+        return questionCard;
+    }
 
     @Override
-    public QuestionCard getQuestionCard(QuestionCard questionCard) {
-        QuestionCard questionCard1 = new QuestionCard();
-        String sql = "SELECT * FROM question_cards WHERE question_id = ?";
-        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, questionCard.getCardId());
-        if (results.next()) {
-            questionCard1.setCardId(results.getInt("card_id"));
-            questionCard1.setQuestion(results.getString("question"));
+    public List<QuestionCard> getQuestionCards() {
+        List<QuestionCard> questionCards = new ArrayList<>();
+        String sql = "SELECT * FROM question_cards";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+        while (results.next()) {
+            questionCards.add(mapQuestionCardToRow(results));
         }
-        return questionCard1;
+        return questionCards;
     }
 }
