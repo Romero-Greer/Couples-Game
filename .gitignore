@@ -1,0 +1,4 @@
+.gradle/
+.ida/
+*.lock
+*.probe
