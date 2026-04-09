@@ -1,4 +1,4 @@
 .gradle/
-.ida/
+.idea/
 *.lock
 *.probe
