@@ -2,3 +2,9 @@
 .idea/
 *.lock
 *.probe
+server - Couples Game/src/main/resources/application.properties
+server - Couples Game/.gradle/
+server - Couples Game/,idea/
+server - Couples Game/target/
+*.lock
+*.probe
