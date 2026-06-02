@@ -13,6 +13,7 @@ public class GameEngine {
     private final TeamsDao teamsDao;
     private final QuestionCardDao questionCardDao;
     private List<Teams> allTeams = new ArrayList<>();
+    private List<Teams> tiedTeams = new ArrayList<>();
     private Teams currentTeam;
     private GamePhase currentPhase;
     private Map<Integer, Integer> rollOffResults;
@@ -25,10 +26,48 @@ public class GameEngine {
         this.rollOffResults = new HashMap<>();
     }
 
+    public List<Teams> getAllTeams() {
+        return allTeams;
+    }
+
+    public List<Teams> getTiedTeams() {
+        return tiedTeams;
+    }
+
+    private void detectTies() {
+        tiedTeams.clear();
+        for (int i = 0; i < allTeams.size() - 1; i++) {
+            int scoreA = rollOffResults.get(allTeams.get(i).getTeamId());
+            int scoreB = rollOffResults.get(allTeams.get(i + 1).getTeamId());
+            if (scoreA == scoreB) {
+                if (!tiedTeams.contains(allTeams.get(i))) {
+                    tiedTeams.add(allTeams.get(i));
+                }
+                tiedTeams.add(allTeams.get(i + 1));
+            }
+        }
+    }
+
+    public Teams tieBreakRoll(Teams team, int rollAmount) {
+        rollOffResults.put(team.getTeamId(), rollAmount);
+        int nextIndex = tiedTeams.indexOf(team) + 1;
+        if (nextIndex >= tiedTeams.size()) {
+            allTeams.sort((teamA, teamB) -> {
+                int scoreA = rollOffResults.get(teamA.getTeamId());
+                int scoreB = rollOffResults.get(teamB.getTeamId());
+                return Integer.compare(scoreB, scoreA);
+            });
+            detectTies();
+            return null;
+        }
+        return tiedTeams.get(nextIndex);
+    }
+
     public void startGame() {
         this.allTeams = teamsDao.getTeams();
         if (allTeams.isEmpty()) {
             System.out.println("There are no teams to start. Please add teams to play!");
+            return;
         }
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
@@ -77,8 +116,8 @@ public class GameEngine {
         for (int i = 0; i < allTeams.size(); i++) {
             System.out.println((i + 1) + " : " + allTeams.get(i).getTeamName());
         }
-        this.currentPhase = GamePhase.TEAM_TURN; //Not sure if this is right***
-        playRound();
+        detectTies();
+        this.currentPhase = GamePhase.TEAM_TURN;
     }
 
     public void playRound() {
@@ -93,6 +132,10 @@ public class GameEngine {
 
     public void teamTurn(Teams team) {
         List<QuestionCard> allQuestions = questionCardDao.getQuestionCards();
+        if (allQuestions.isEmpty()) {
+            System.out.println("No question cards found. Please add questions to the database.");
+            return;
+        }
 
         Random random = new Random();
         int randomIndex = random.nextInt(allQuestions.size());

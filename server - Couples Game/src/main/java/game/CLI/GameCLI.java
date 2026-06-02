@@ -9,6 +9,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import java.util.Scanner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -77,6 +78,7 @@ public class GameCLI implements CommandLineRunner{
             if (choice == 0) {
                 gameEngine.startGame();
                 handleRollOff();
+                handleTieBreak();
                 gameEngine.playRound();
             } else if (choice == 1) {
                 teamCreation();
@@ -87,6 +89,8 @@ public class GameCLI implements CommandLineRunner{
                     System.out.println("Invalid choice. Try again.");
                 } else if (teamChoice == 4) {
                     continue;
+                } else if (teamChoice >= teamsDao.getTeams().size()) {
+                    System.out.println("Invalid choice. Try again.");
                 } else {
                     printTeamUpdateSelections();
                     int updateChoice = promptForSelection("What would you like to update?");
@@ -104,6 +108,8 @@ public class GameCLI implements CommandLineRunner{
                 printTeamsSelectionMenu();
                 int deleteChoice = promptForSelection("Which team would you like to remove?");
                 if (deleteChoice < 0 || deleteChoice > 3) {
+                    System.out.println("Invalid choice. Try again.");
+                } else if (deleteChoice >= teamsDao.getTeams().size()) {
                     System.out.println("Invalid choice. Try again.");
                 } else {
                     deleteTeam(deleteChoice);
@@ -146,8 +152,33 @@ public class GameCLI implements CommandLineRunner{
         System.out.println("(3): Back to main menu");
     }
 
+    private void handleTieBreak() {
+        while (!gameEngine.getTiedTeams().isEmpty()) {
+            List<Teams> tied = new ArrayList<>(gameEngine.getTiedTeams());
+            System.out.println("There is a tie! The following teams must re-roll:");
+            for (Teams t : tied) {
+                System.out.println("- " + t.getTeamName());
+            }
+
+            Teams nextTeamToRoll = tied.get(0);
+            while (nextTeamToRoll != null) {
+                System.out.println(nextTeamToRoll.getTeamName() + ", press enter to re-roll!");
+                input.nextLine();
+                int roll = (int)(Math.random() * 6) + 1;
+                System.out.println("Your team rolled a " + roll + "!");
+                nextTeamToRoll = gameEngine.tieBreakRoll(nextTeamToRoll, roll);
+            }
+
+            System.out.println("Updated starting order:");
+            List<Teams> teams = gameEngine.getAllTeams();
+            for (int i = 0; i < teams.size(); i++) {
+                System.out.println((i + 1) + " : " + teams.get(i).getTeamName());
+            }
+        }
+    }
+
     public void handleRollOff() {
-        List<Teams> teams = teamsDao.getTeams();
+        List<Teams> teams = gameEngine.getAllTeams();
         Teams nextTeamToRoll = teams.get(0);
 
         while (nextTeamToRoll != null) {
@@ -187,12 +218,20 @@ public class GameCLI implements CommandLineRunner{
         Teams team = teams.get(element);
         int teamId = team.getTeamId();
         List<Players> players = playersDao.getPlayersByTeamId(teamId);
+        if (players.size() < 2) {
+            System.out.println("This team does not have 2 players on record. Unable to update.");
+            return;
+        }
         Players player1 = players.get(0);
         Players player2 = players.get(1);
         /*String currentPlayer1Name = player1.getName();
         String currentPlayer2Name = player2.getName();*/
         int player1Id = playersDao.getPlayerIdByNameAndTeamId(player1);
         int player2Id = playersDao.getPlayerIdByNameAndTeamId(player2);
+        if (player1Id == -1 || player2Id == -1) {
+            System.out.println("Could not find one or more players for this team. Unable to update.");
+            return;
+        }
 
         System.out.println("Enter player 1 name: ");
         String newPlayer1Name = input.nextLine();

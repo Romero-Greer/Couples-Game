@@ -61,7 +61,7 @@ public class JdbcTeamsDao implements TeamsDao {
         String removeTeamSql = "DELETE FROM teams WHERE team_id = ?";
         int affectedRows = jdbcTemplate.update(removePlayersFromTeamSql, teamId);
         int rowsAffected = jdbcTemplate.update(removeTeamSql, teamId);
-        if (affectedRows > 0 && rowsAffected > 0) {
+        if (rowsAffected > 0) {
             return getTeams();
         }
         System.out.println("Unable to remove team.");
