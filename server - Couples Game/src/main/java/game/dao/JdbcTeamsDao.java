@@ -74,4 +74,10 @@ public class JdbcTeamsDao implements TeamsDao {
         jdbcTemplate.update(sql, team.getTeamName(), team.getTeamId());
         return getTeamByTeamId(team.getTeamId());
     }
+
+    @Override
+    public void deleteAllTeams() {
+        String sql = "DELETE FROM teams";
+        jdbcTemplate.update(sql);
+    }
 }

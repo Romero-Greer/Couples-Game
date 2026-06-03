@@ -39,6 +39,15 @@ CREATE TABLE question_cards (
 );
 
 -- ============================================================
+-- SCORES TABLE
+-- ============================================================
+CREATE TABLE scores (
+    score_id SERIAL PRIMARY KEY,
+    team_id  INT NOT NULL UNIQUE REFERENCES teams(team_id) ON DELETE CASCADE,
+    score    INT NOT NULL DEFAULT 0
+);
+
+-- ============================================================
 -- SAMPLE QUESTION DATA
 -- ============================================================
 INSERT INTO question_cards (question) VALUES

@@ -1,7 +1,9 @@
 package game.logic;
 import game.model.QuestionCard;
+import game.model.Scores;
 import game.model.Teams;
 import game.dao.PlayersDao;
+import game.dao.ScoresDao;
 import game.dao.TeamsDao;
 import game.dao.QuestionCardDao;
 
@@ -12,16 +14,19 @@ public class GameEngine {
     private final PlayersDao playersDao;
     private final TeamsDao teamsDao;
     private final QuestionCardDao questionCardDao;
+    private final ScoresDao scoresDao;
     private List<Teams> allTeams = new ArrayList<>();
     private List<Teams> tiedTeams = new ArrayList<>();
     private Teams currentTeam;
     private GamePhase currentPhase;
     private Map<Integer, Integer> rollOffResults;
+    private Map<Integer, Integer> teamTurnCount = new HashMap<>();
 
-    public GameEngine(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao) {
+    public GameEngine(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao, ScoresDao scoresDao) {
         this.playersDao = playersDao;
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
+        this.scoresDao = scoresDao;
         this.currentPhase = GamePhase.STARTUP;
         this.rollOffResults = new HashMap<>();
     }
@@ -69,6 +74,7 @@ public class GameEngine {
             System.out.println("There are no teams to start. Please add teams to play!");
             return;
         }
+        scoresDao.initializeScores(allTeams);
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
         // Should I call the initialRoll method here?
@@ -120,41 +126,100 @@ public class GameEngine {
         this.currentPhase = GamePhase.TEAM_TURN;
     }
 
-    public void playRound() {
+    public Teams playRound() {
         System.out.println("Starting round");
 
         for (Teams team : allTeams) {
             this.currentTeam = team;
-            teamTurn(team);
+            boolean gameOver = teamTurn(team);
+            if (gameOver) {
+                return team;
+            }
         }
-        /** After everyone goes add a check if game is over or starts another round **/
+        return null;
     }
 
-    public void teamTurn(Teams team) {
+    public void resetForNewGame() {
+        rollOffResults.clear();
+        tiedTeams.clear();
+        teamTurnCount.clear();
+        scoresDao.resetAllScores();
+        this.currentPhase = GamePhase.ROLL_OFF;
+        System.out.println("Roll the dice to see who starts!");
+    }
+
+    public void wipeAllData() {
+        teamsDao.deleteAllTeams();
+    }
+
+    public void displayScoreboard() {
+        System.out.println("--- SCOREBOARD ---");
+        List<Scores> scores = scoresDao.getScores();
+        for (int i = 0; i < scores.size(); i++) {
+            Scores s = scores.get(i);
+            System.out.println((i + 1) + ". " + s.getTeamName() + " — " + s.getScore() + " pts");
+        }
+        System.out.println("------------------");
+    }
+
+    public boolean teamTurn(Teams team) {
         List<QuestionCard> allQuestions = questionCardDao.getQuestionCards();
         if (allQuestions.isEmpty()) {
             System.out.println("No question cards found. Please add questions to the database.");
-            return;
+            return false;
         }
+
+        List<game.model.Players> players = playersDao.getPlayersByTeamId(team.getTeamId());
+        if (players.size() < 2) {
+            System.out.println("Team " + team.getTeamName() + " does not have 2 players. Skipping turn.");
+            return false;
+        }
+
+        int turnCount = teamTurnCount.getOrDefault(team.getTeamId(), 0);
+        String answerer = (turnCount % 2 == 0) ? players.get(0).getName() : players.get(1).getName();
+        String guesser  = (turnCount % 2 == 0) ? players.get(1).getName() : players.get(0).getName();
 
         Random random = new Random();
         int randomIndex = random.nextInt(allQuestions.size());
         QuestionCard question = allQuestions.get(randomIndex);
-        String sameQuestion = question.getQuestion();
 
-        System.out.println("It is " + team.getTeamName() + "'s turn!");
-        System.out.println("Player 2 turn around. Player 1 give your answer.");
+        System.out.println("--- " + team.getTeamName().toUpperCase() + "'S TURN ---");
+        System.out.println(guesser + ", please look away!");
+        System.out.println("Press enter when " + guesser + " has looked away...");
+        input.nextLine();
+
+        System.out.println(answerer + ", answer this question about yourself:");
         System.out.println("Question: " + question.getQuestion());
-        String player1Answer = input.nextLine();
-        System.out.println("Player 2, submit your answer about Player 1");
-        System.out.println("Question: " + sameQuestion);
-        String player2Answer = input.nextLine();
+        String answererResponse = input.nextLine();
 
-        if (player1Answer.equals(player2Answer)) {
-            System.out.println("ME, A WINNNNERRR!");
+        System.out.println("---");
+        System.out.println(answerer + ", hide your answer. " + guesser + ", you can look now!");
+        System.out.println("Press enter when " + guesser + " is ready...");
+        input.nextLine();
+
+        System.out.println(guesser + ", what do you think " + answerer + " answered?");
+        System.out.println("Question: " + question.getQuestion());
+        String guesserResponse = input.nextLine();
+
+        System.out.println("---");
+        System.out.println(answerer + " answered: " + answererResponse);
+        System.out.println(guesser + "  guessed:  " + guesserResponse);
+
+        teamTurnCount.put(team.getTeamId(), turnCount + 1);
+
+        if (StringSimilarity.isSimilarEnough(answererResponse, guesserResponse)) {
+            System.out.println("It's a match!");
+            Scores updated = scoresDao.addPointToTeam(team.getTeamId());
+            displayScoreboard();
+            if (updated != null && updated.getScore() >= 10) {
+                return true;
+            }
         } else {
-            System.out.println("A TOWN FULL OF LOOOOOSSSSERRRSSS");
+            System.out.println("Not a match.");
+            displayScoreboard();
         }
+
+        return false;
     }
 }
 

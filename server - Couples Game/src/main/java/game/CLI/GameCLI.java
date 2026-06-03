@@ -1,6 +1,7 @@
 package game.CLI;
 import game.dao.PlayersDao;
 import game.dao.QuestionCardDao;
+import game.dao.ScoresDao;
 import game.dao.TeamsDao;
 import game.logic.GameEngine;
 import game.model.Players;
@@ -18,14 +19,15 @@ public class GameCLI implements CommandLineRunner{
     private PlayersDao playersDao;
     private TeamsDao teamsDao;
     private QuestionCardDao questionCardDao;
+    private ScoresDao scoresDao;
     private GameEngine gameEngine;
-    //GameEngine  gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
 
-    public GameCLI(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao) {
+    public GameCLI(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao, ScoresDao scoresDao) {
         this.playersDao = playersDao;
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
-        this.gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao);
+        this.scoresDao = scoresDao;
+        this.gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao, scoresDao);
     }
 
     /** Couple things to work on next:
@@ -77,9 +79,18 @@ public class GameCLI implements CommandLineRunner{
             int choice = promptForSelection("What would you like to do?");
             if (choice == 0) {
                 gameEngine.startGame();
-                handleRollOff();
-                handleTieBreak();
-                gameEngine.playRound();
+                if (!gameEngine.getAllTeams().isEmpty()) {
+                    Teams winner = runGame();
+                    while (winner != null) {
+                        boolean playAgain = handleEndOfGame(winner);
+                        if (!playAgain) {
+                            done = true;
+                            break;
+                        }
+                        gameEngine.resetForNewGame();
+                        winner = runGame();
+                    }
+                }
             } else if (choice == 1) {
                 teamCreation();
             } else if (choice == 2) {
@@ -150,6 +161,29 @@ public class GameCLI implements CommandLineRunner{
         System.out.println("(1): Team Name");
         System.out.println("(2): Players");
         System.out.println("(3): Back to main menu");
+    }
+
+    private Teams runGame() {
+        handleRollOff();
+        handleTieBreak();
+        return gameEngine.playRound();
+    }
+
+    private boolean handleEndOfGame(Teams winner) {
+        System.out.println("==============================================");
+        System.out.println("  " + winner.getTeamName().toUpperCase() + " WINS THE GAME!");
+        System.out.println("==============================================");
+        gameEngine.displayScoreboard();
+        System.out.println("(0): Play Again");
+        System.out.println("(1): Quit");
+        int choice = promptForSelection("What would you like to do?");
+        if (choice == 0) {
+            return true;
+        } else {
+            gameEngine.wipeAllData();
+            System.out.println("All game data has been wiped. Thanks for playing!");
+            return false;
+        }
     }
 
     private void handleTieBreak() {

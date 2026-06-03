@@ -9,4 +9,5 @@ public interface TeamsDao {
     Teams addTeam(Teams team);
     List<Teams> removeTeam(int teamId);
     Teams updateTeam(Teams team);
+    void deleteAllTeams();
 }
