@@ -71,6 +71,14 @@ public class GameEngine {
         return tiedTeams.get(nextIndex);
     }
 
+    private List<QuestionCard> buildDeck() {
+        List<QuestionCard> deck = questionCardDao.getQuestionCards();
+        if (allTeams.size() < 2) {
+            deck.removeIf(card -> "wildcard_teams".equals(card.getCardType()));
+        }
+        return deck;
+    }
+
     public void startGame() {
         this.allTeams = teamsDao.getTeams();
         if (allTeams.isEmpty()) {
@@ -78,7 +86,7 @@ public class GameEngine {
             return;
         }
         scoresDao.initializeScores(allTeams);
-        this.questionDeck = questionCardDao.getQuestionCards();
+        this.questionDeck = buildDeck();
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
         // Should I call the initialRoll method here?
@@ -148,7 +156,7 @@ public class GameEngine {
         tiedTeams.clear();
         teamTurnCount.clear();
         scoresDao.resetAllScores();
-        this.questionDeck = questionCardDao.getQuestionCards();
+        this.questionDeck = buildDeck();
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
     }
