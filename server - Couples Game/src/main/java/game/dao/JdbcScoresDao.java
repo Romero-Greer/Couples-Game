@@ -50,8 +50,14 @@ public class JdbcScoresDao implements ScoresDao {
 
     @Override
     public Scores addPointToTeam(int teamId) {
-        String sql = "UPDATE scores SET score = score + 1 WHERE team_id = ? RETURNING score_id";
-        int scoreId = jdbcTemplate.queryForObject(sql, int.class, teamId);
+        String sql = "INSERT INTO scores (team_id, score) VALUES (?, 1) " +
+                     "ON CONFLICT (team_id) DO UPDATE SET score = scores.score + 1 " +
+                     "RETURNING score_id";
+        SqlRowSet returning = jdbcTemplate.queryForRowSet(sql, teamId);
+        if (!returning.next()) {
+            return null;
+        }
+        int scoreId = returning.getInt("score_id");
         String selectSql = "SELECT s.score_id, s.team_id, t.team_name, s.score " +
                            "FROM scores s JOIN teams t ON s.team_id = t.team_id " +
                            "WHERE s.score_id = ?";

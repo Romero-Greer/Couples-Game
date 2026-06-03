@@ -10,19 +10,22 @@ import game.dao.QuestionCardDao;
 import java.util.*;
 
 public class GameEngine {
-    private Scanner input = new Scanner(System.in);
+    private final Scanner input;
     private final PlayersDao playersDao;
     private final TeamsDao teamsDao;
     private final QuestionCardDao questionCardDao;
     private final ScoresDao scoresDao;
+    private final Random random = new Random();
     private List<Teams> allTeams = new ArrayList<>();
     private List<Teams> tiedTeams = new ArrayList<>();
+    private List<QuestionCard> questionDeck = new ArrayList<>();
     private Teams currentTeam;
     private GamePhase currentPhase;
     private Map<Integer, Integer> rollOffResults;
     private Map<Integer, Integer> teamTurnCount = new HashMap<>();
 
-    public GameEngine(PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao, ScoresDao scoresDao) {
+    public GameEngine(Scanner input, PlayersDao playersDao, TeamsDao teamsDao, QuestionCardDao questionCardDao, ScoresDao scoresDao) {
+        this.input = input;
         this.playersDao = playersDao;
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
@@ -75,6 +78,7 @@ public class GameEngine {
             return;
         }
         scoresDao.initializeScores(allTeams);
+        this.questionDeck = questionCardDao.getQuestionCards();
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
         // Should I call the initialRoll method here?
@@ -144,6 +148,7 @@ public class GameEngine {
         tiedTeams.clear();
         teamTurnCount.clear();
         scoresDao.resetAllScores();
+        this.questionDeck = questionCardDao.getQuestionCards();
         this.currentPhase = GamePhase.ROLL_OFF;
         System.out.println("Roll the dice to see who starts!");
     }
@@ -157,14 +162,13 @@ public class GameEngine {
         List<Scores> scores = scoresDao.getScores();
         for (int i = 0; i < scores.size(); i++) {
             Scores s = scores.get(i);
-            System.out.println((i + 1) + ". " + s.getTeamName() + " — " + s.getScore() + " pts");
+            System.out.println((i + 1) + ". " + s.getTeamName() + " - " + s.getScore() + " pts");
         }
         System.out.println("------------------");
     }
 
     public boolean teamTurn(Teams team) {
-        List<QuestionCard> allQuestions = questionCardDao.getQuestionCards();
-        if (allQuestions.isEmpty()) {
+        if (questionDeck.isEmpty()) {
             System.out.println("No question cards found. Please add questions to the database.");
             return false;
         }
@@ -179,17 +183,34 @@ public class GameEngine {
         String answerer = (turnCount % 2 == 0) ? players.get(0).getName() : players.get(1).getName();
         String guesser  = (turnCount % 2 == 0) ? players.get(1).getName() : players.get(0).getName();
 
-        Random random = new Random();
-        int randomIndex = random.nextInt(allQuestions.size());
-        QuestionCard question = allQuestions.get(randomIndex);
+        QuestionCard card = questionDeck.get(random.nextInt(questionDeck.size()));
 
         System.out.println("--- " + team.getTeamName().toUpperCase() + "'S TURN ---");
-        System.out.println(guesser + ", please look away!");
-        System.out.println("Press enter when " + guesser + " has looked away...");
-        input.nextLine();
+
+        String questionText;
+        if ("wildcard_self".equals(card.getCardType())) {
+            teamTurnCount.put(team.getTeamId(), turnCount + 1);
+            return handleWildcardSelf(team, answerer, guesser);
+        } else if ("wildcard_teams".equals(card.getCardType())) {
+            questionText = handleWildcardTeams(team, answerer, guesser);
+        } else {
+            questionText = card.getQuestion();
+        }
+
+        teamTurnCount.put(team.getTeamId(), turnCount + 1);
+        boolean skipLookAway = "wildcard_teams".equals(card.getCardType());
+        return playAnswerGuessRound(team, answerer, guesser, questionText, skipLookAway);
+    }
+
+    private boolean playAnswerGuessRound(Teams team, String answerer, String guesser, String questionText, boolean skipLookAway) {
+        if (!skipLookAway) {
+            System.out.println(guesser + ", please look away!");
+            System.out.println("Press enter when " + guesser + " has looked away...");
+            input.nextLine();
+        }
 
         System.out.println(answerer + ", answer this question about yourself:");
-        System.out.println("Question: " + question.getQuestion());
+        System.out.println("Question: " + questionText);
         String answererResponse = input.nextLine();
 
         System.out.println("---");
@@ -198,14 +219,12 @@ public class GameEngine {
         input.nextLine();
 
         System.out.println(guesser + ", what do you think " + answerer + " answered?");
-        System.out.println("Question: " + question.getQuestion());
+        System.out.println("Question: " + questionText);
         String guesserResponse = input.nextLine();
 
         System.out.println("---");
         System.out.println(answerer + " answered: " + answererResponse);
         System.out.println(guesser + "  guessed:  " + guesserResponse);
-
-        teamTurnCount.put(team.getTeamId(), turnCount + 1);
 
         if (StringSimilarity.isSimilarEnough(answererResponse, guesserResponse)) {
             System.out.println("It's a match!");
@@ -220,6 +239,79 @@ public class GameEngine {
         }
 
         return false;
+    }
+
+    private boolean handleWildcardSelf(Teams team, String answerer, String guesser) {
+        System.out.println("*** WILDCARD! " + answerer.toUpperCase() + " gets to choose the question! ***");
+        System.out.println(guesser + ", please look away!");
+        System.out.println("Press enter when " + guesser + " has looked away...");
+        input.nextLine();
+
+        System.out.println(answerer + ", type the question you want " + guesser + " to guess your answer to:");
+        String question = input.nextLine();
+        System.out.println("Question locked in! Now answer it.");
+        System.out.println("Question: " + question);
+        String answererResponse = input.nextLine();
+
+        System.out.println("---");
+        System.out.println(answerer + ", hide your answer. " + guesser + ", you can look now!");
+        System.out.println("Press enter when " + guesser + " is ready...");
+        input.nextLine();
+
+        System.out.println(guesser + ", what do you think " + answerer + " answered?");
+        System.out.println("Question: " + question);
+        String guesserResponse = input.nextLine();
+
+        System.out.println("---");
+        System.out.println(answerer + " answered: " + answererResponse);
+        System.out.println(guesser + "  guessed:  " + guesserResponse);
+
+        if (StringSimilarity.isSimilarEnough(answererResponse, guesserResponse)) {
+            System.out.println("It's a match!");
+            Scores updated = scoresDao.addPointToTeam(team.getTeamId());
+            displayScoreboard();
+            if (updated != null && updated.getScore() >= 10) {
+                return true;
+            }
+        } else {
+            System.out.println("Not a match.");
+            displayScoreboard();
+        }
+        return false;
+    }
+
+    private String handleWildcardTeams(Teams playingTeam, String answerer, String guesser) {
+        List<Teams> otherTeams = new ArrayList<>();
+        for (Teams t : allTeams) {
+            if (t.getTeamId() != playingTeam.getTeamId()) {
+                otherTeams.add(t);
+            }
+        }
+
+        System.out.println("*** WILDCARD! Other teams secretly choose the question! ***");
+
+        if (otherTeams.isEmpty()) {
+            return "What is something your partner does that always makes you smile?";
+        }
+
+        System.out.println(answerer + " and " + guesser + ", please look away!");
+        System.out.println("Press enter when both players have looked away...");
+        input.nextLine();
+
+        List<String> submitted = new ArrayList<>();
+        for (Teams otherTeam : otherTeams) {
+            System.out.println(otherTeam.getTeamName() + ", enter a question for " + playingTeam.getTeamName() + ":");
+            submitted.add(input.nextLine());
+            System.out.println("Question submitted!");
+        }
+
+        String selected = submitted.get(new Random().nextInt(submitted.size()));
+        System.out.println("*** A question has been secretly chosen! ***");
+        System.out.println(answerer + ", you can look now! " + guesser + ", keep looking away!");
+        System.out.println("Press enter when " + answerer + " is ready...");
+        input.nextLine();
+
+        return selected;
     }
 }
 

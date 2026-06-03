@@ -27,7 +27,7 @@ public class GameCLI implements CommandLineRunner{
         this.teamsDao = teamsDao;
         this.questionCardDao = questionCardDao;
         this.scoresDao = scoresDao;
-        this.gameEngine = new GameEngine(playersDao, teamsDao, questionCardDao, scoresDao);
+        this.gameEngine = new GameEngine(input, playersDao, teamsDao, questionCardDao, scoresDao);
     }
 
     /** Couple things to work on next:
@@ -118,8 +118,10 @@ public class GameCLI implements CommandLineRunner{
             } else if (choice == 3) {
                 printTeamsSelectionMenu();
                 int deleteChoice = promptForSelection("Which team would you like to remove?");
-                if (deleteChoice < 0 || deleteChoice > 3) {
+                if (deleteChoice < 0 || deleteChoice > 4) {
                     System.out.println("Invalid choice. Try again.");
+                } else if (deleteChoice == 4) {
+                    continue;
                 } else if (deleteChoice >= teamsDao.getTeams().size()) {
                     System.out.println("Invalid choice. Try again.");
                 } else {
@@ -166,7 +168,11 @@ public class GameCLI implements CommandLineRunner{
     private Teams runGame() {
         handleRollOff();
         handleTieBreak();
-        return gameEngine.playRound();
+        Teams winner = null;
+        while (winner == null) {
+            winner = gameEngine.playRound();
+        }
+        return winner;
     }
 
     private boolean handleEndOfGame(Teams winner) {

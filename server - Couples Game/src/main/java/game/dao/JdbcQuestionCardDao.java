@@ -20,6 +20,7 @@ public class JdbcQuestionCardDao implements QuestionCardDao {
         QuestionCard questionCard = new QuestionCard();
         questionCard.setCardId(rs.getInt("card_id"));
         questionCard.setQuestion(rs.getString("question"));
+        questionCard.setCardType(rs.getString("card_type"));
         return questionCard;
     }
 
