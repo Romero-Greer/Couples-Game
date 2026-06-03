@@ -202,6 +202,14 @@ public class GameEngine {
         return playAnswerGuessRound(team, answerer, guesser, questionText, skipLookAway);
     }
 
+    private String toSelfQuestion(String question) {
+        return question
+                .replace("your partner's", "your")
+                .replace("Your partner's", "Your")
+                .replace("your partner", "you")
+                .replace("Your partner", "You");
+    }
+
     private boolean playAnswerGuessRound(Teams team, String answerer, String guesser, String questionText, boolean skipLookAway) {
         if (!skipLookAway) {
             System.out.println(guesser + ", please look away!");
@@ -210,8 +218,12 @@ public class GameEngine {
         }
 
         System.out.println(answerer + ", answer this question about yourself:");
-        System.out.println("Question: " + questionText);
+        System.out.println("Question: " + toSelfQuestion(questionText));
         String answererResponse = input.nextLine();
+        while (answererResponse.trim().isEmpty()) {
+            System.out.println("Answer cannot be blank. Please enter a response:");
+            answererResponse = input.nextLine();
+        }
 
         System.out.println("---");
         System.out.println(answerer + ", hide your answer. " + guesser + ", you can look now!");
@@ -221,6 +233,10 @@ public class GameEngine {
         System.out.println(guesser + ", what do you think " + answerer + " answered?");
         System.out.println("Question: " + questionText);
         String guesserResponse = input.nextLine();
+        while (guesserResponse.trim().isEmpty()) {
+            System.out.println("Answer cannot be blank. Please enter a response:");
+            guesserResponse = input.nextLine();
+        }
 
         System.out.println("---");
         System.out.println(answerer + " answered: " + answererResponse);
@@ -230,7 +246,7 @@ public class GameEngine {
             System.out.println("It's a match!");
             Scores updated = scoresDao.addPointToTeam(team.getTeamId());
             displayScoreboard();
-            if (updated != null && updated.getScore() >= 10) {
+            if (updated != null && updated.getScore() >= 3) {
                 return true;
             }
         } else {
@@ -252,6 +268,10 @@ public class GameEngine {
         System.out.println("Question locked in! Now answer it.");
         System.out.println("Question: " + question);
         String answererResponse = input.nextLine();
+        while (answererResponse.trim().isEmpty()) {
+            System.out.println("Answer cannot be blank. Please enter a response:");
+            answererResponse = input.nextLine();
+        }
 
         System.out.println("---");
         System.out.println(answerer + ", hide your answer. " + guesser + ", you can look now!");
@@ -261,6 +281,10 @@ public class GameEngine {
         System.out.println(guesser + ", what do you think " + answerer + " answered?");
         System.out.println("Question: " + question);
         String guesserResponse = input.nextLine();
+        while (guesserResponse.trim().isEmpty()) {
+            System.out.println("Answer cannot be blank. Please enter a response:");
+            guesserResponse = input.nextLine();
+        }
 
         System.out.println("---");
         System.out.println(answerer + " answered: " + answererResponse);
@@ -270,7 +294,7 @@ public class GameEngine {
             System.out.println("It's a match!");
             Scores updated = scoresDao.addPointToTeam(team.getTeamId());
             displayScoreboard();
-            if (updated != null && updated.getScore() >= 10) {
+            if (updated != null && updated.getScore() >= 3) {
                 return true;
             }
         } else {

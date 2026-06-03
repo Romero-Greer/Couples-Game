@@ -17,7 +17,7 @@ public class StringSimilarity {
 
         int distance = levenshteinDistance(normA, normB);
         double similarity = 1.0 - ((double) distance / maxLength);
-        return similarity >= 0.70;
+        return similarity >= 0.50;
     }
 
     private static String normalize(String s) {
