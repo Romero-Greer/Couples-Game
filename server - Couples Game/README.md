@@ -7,10 +7,13 @@ A CLI-based party game for couples to test how well they know each other. Teams 
 ## Features
 
 - 1–4 teams, each with 2 players
-- Dice roll-off to determine turn order (with tie-breaker handling)
-- 44 standard questions + wildcard cards
+- Dice roll-off to determine turn order (with automatic tie-breaker re-rolls)
+- 51 question cards: 45 standard + 3 wildcard_self + 3 wildcard_teams
+- Alternating roles each turn — who answers and who guesses swaps between the two players each round
 - Fuzzy answer matching (Levenshtein distance, 60% similarity threshold)
-- Scoreboard tracking with win condition
+- Blank answer blocking — empty submissions are rejected
+- Scoreboard tracking with win condition (first to 3 points)
+- Play Again flow — after a win, teams can replay (resets scores and turn order) or quit (wipes all data)
 - Full team management (add, update, remove, view)
 
 ### Card Types
@@ -91,10 +94,10 @@ gradlew.bat bootRun      # Windows
 ## How to Play
 
 1. **Add teams** — each team needs a name and 2 player names
-2. **Start the game** — teams roll dice to determine turn order
-3. **Take turns** — one player answers a question about themselves while their partner looks away, then the partner guesses
-4. **Score points** — a correct guess (within 60% string similarity) earns 1 point
-5. **Win** — first team to reach 3 points wins
+2. **Start the game** — each team rolls a die to determine turn order; ties trigger automatic re-rolls until resolved
+3. **Take turns** — Player 2 looks away while Player 1 answers a question about themselves, then Player 2 looks back and guesses; roles alternate each round so both players get to answer
+4. **Score points** — a correct guess (within 60% string similarity) earns 1 point; the scoreboard updates after every turn
+5. **Win** — first team to reach 3 points wins; you can play again (resets everything) or quit (all team data is wiped)
 
 ---
 
@@ -121,7 +124,7 @@ src/main/java/game/
     └── StringSimilarity.java   # Fuzzy answer matching
 
 database/
-└── couples-game.sql            # Schema + seed data (50 question cards)
+└── couples-game.sql            # Schema + seed data (51 question cards)
 ```
 
 ---
